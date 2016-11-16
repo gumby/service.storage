@@ -1,0 +1,17 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+    maven { url 'http://192.168.33.10:8081/artifactory/libs-release-local' }
+}
+
+dependencies {
+  compile 'com.datastax.cassandra:cassandra-driver-core:3.1.2:shaded'
+  compile 'io.reactivex:rxjava:1.2.2'
+  compile 'com.cleo.clarify:storage.grpc:0.3'
+  compile 'com.cleo.clarify:chassis:0.2.3'
+    
+  testCompile 'com.jayway.awaitility:awaitility:1.7.0'
+  testCompile 'com.spotify:cassandra-extra:0.0.2'
+  testCompile 'junit:junit:4.12'
+}

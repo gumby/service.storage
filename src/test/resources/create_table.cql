@@ -1,0 +1,1 @@
+CREATE TABLE objects(id text PRIMARY KEY, data blob, object_size bigint, chunk_size bigint, chunk_count int);
