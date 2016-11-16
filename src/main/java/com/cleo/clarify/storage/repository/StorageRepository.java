@@ -7,8 +7,8 @@ import rx.Observable;
 
 public interface StorageRepository {
   
-  public Observable<Chunk> readChunkRx(String objectId, int chunkIndex);
+  public Observable<Chunk> readChunk(String objectId, int chunkIndex);
 
-  public Observable<ObjectMetadata> readMetadataRx(String objectId);
+  public Observable<ObjectMetadata> readMetadata(String objectId);
   
 }

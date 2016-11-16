@@ -27,9 +27,9 @@ public class ObjectReader {
 
   public Observable<Chunk> readRx(String objectId) {    
     return Observable.create(s -> {
-      storageRepo.readMetadataRx(objectId)
+      storageRepo.readMetadata(objectId)
       .flatMap(metadata -> Observable.from(IntStream.range(0, metadata.chunkCount).boxed().collect(toShuffledList())))
-      .flatMap(index -> storageRepo.readChunkRx(objectId, index), concurrencyLevel)
+      .flatMap(index -> storageRepo.readChunk(objectId, index), concurrencyLevel)
       .forEach(
           chunk -> s.onNext(chunk),
           error -> s.onError(error),

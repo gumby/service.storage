@@ -43,7 +43,7 @@ public class CassandraStorageRepository implements StorageRepository {
   }
 
   @Override
-  public Observable<ObjectMetadata> readMetadataRx(String objectId) {
+  public Observable<ObjectMetadata> readMetadata(String objectId) {
     return Observable.from(session.executeAsync(metadataQuery.bind(getRowKey(objectId))), Schedulers.io())
         .map((rs) -> rs.one())
         .map((metadataRow) -> new ObjectMetadata.Builder()
@@ -55,7 +55,7 @@ public class CassandraStorageRepository implements StorageRepository {
   }
 
   @Override
-  public Observable<Chunk> readChunkRx(String objectId, int chunkIndex) {
+  public Observable<Chunk> readChunk(String objectId, int chunkIndex) {
     return Observable.from(session.executeAsync(chunkQuery.bind(getRowKey(objectId, chunkIndex))), Schedulers.io())
         .map((rs) -> rs.one())
         .map((chunkRow) -> chunkRow.getBytes("data"))
