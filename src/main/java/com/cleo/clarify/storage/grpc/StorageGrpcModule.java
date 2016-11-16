@@ -9,7 +9,7 @@ public class StorageGrpcModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(BindableService.class).to(StorageGrpcService.class).in(Scopes.SINGLETON);
+    bind(BindableService.class).to(StorageService.class).in(Scopes.SINGLETON);
   }
 
 }

@@ -1,22 +1,30 @@
 package com.cleo.clarify.storage.grpc;
 
-import com.cleo.clarify.storage.grpc.DeleteResponse;
-import com.cleo.clarify.storage.grpc.ObjectData;
-import com.cleo.clarify.storage.grpc.ObjectId;
-import com.cleo.clarify.storage.grpc.ObjectInfo;
 import com.cleo.clarify.storage.grpc.StorageServiceGrpc.StorageServiceImplBase;
 import com.cleo.clarify.storage.writer.ObjectWriter;
 import com.google.inject.Inject;
 
+import io.grpc.ServerServiceDefinition;
+import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
+import io.grpc.services.HealthStatusManager;
 import io.grpc.stub.StreamObserver;
 
-public class StorageGrpcService extends StorageServiceImplBase {
-  
+public class StorageService extends StorageServiceImplBase {
+
+  private final HealthStatusManager healthManager;
   private final ObjectWriter writer;
   
   @Inject
-  public StorageGrpcService(ObjectWriter writer) {
+  public StorageService(ObjectWriter writer, HealthStatusManager healthManager) {
     this.writer = writer;
+    this.healthManager = healthManager;
+  }
+  
+  @Override
+  public ServerServiceDefinition bindService() {
+    ServerServiceDefinition definition = super.bindService();
+    healthManager.setStatus(StorageServiceGrpc.SERVICE_NAME, ServingStatus.SERVING);
+    return definition;
   }
 
   @Override
