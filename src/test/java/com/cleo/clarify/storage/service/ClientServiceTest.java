@@ -31,10 +31,7 @@ public class ClientServiceTest {
     Observable.from(chunkSizes::iterator)
     .forEach(
         size -> data.onNext(ObjectData.newBuilder().setData(ByteString.copyFrom(randomBytes(size))).build()),
-        error -> { 
-          data.onError(error);
-          error.printStackTrace();
-        },
+        error -> data.onError(error),
         () -> data.onCompleted());
 
     while (!shutdown.get());
