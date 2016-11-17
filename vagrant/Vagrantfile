@@ -1,0 +1,66 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+VAGRANTFILE_API_VERSION = "2"
+NODE_COUNT = 1
+NETWORK = '10.10.20.'
+FIRST_IP = 30
+
+c_node =  <<SCRIPT
+#!/bin/bash
+
+echo "Installing java..."
+echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+sudo apt-add-repository ppa:webupd8team/java
+sudo apt-get update
+sudo apt-get install -y oracle-java8-set-default
+echo "Done"
+
+echo "Installing cassandra..."
+echo "deb http://www.apache.org/dist/cassandra/debian 39x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install -y cassandra
+echo "Done"
+
+echo "Copying cassandra config..."
+sudo service cassandra stop
+sudo cp /vagrant/cassandra.yaml /etc/cassandra
+sudo service cassandra start
+echo "Done"
+
+echo "Creating keyspace/table..." 
+while netstat -lnt | awk '$4 ~ /:9042$/ {exit 1}'; do echo "Waiting for cassandra..."; sleep 3; done
+cqlsh -f /vagrant/create_storage.cql 10.10.20.30
+echo "Done"
+
+SCRIPT
+
+servers = []
+(0..NODE_COUNT-1).each do |i|
+  name = 'c-node-' + i.to_s
+  ip = NETWORK + (FIRST_IP + i).to_s
+  servers << {'name' => name, 'ip' => ip}
+end
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "ubuntu/xenial64"
+  
+  servers.each do |server|
+    config.vm.define server['name'] do |serverConfig|
+      serverConfig.vm.hostname = server['name']
+      serverConfig.vm.network :private_network, ip: server['ip']
+      serverConfig.vm.provision :shell, :inline => c_node
+      
+      serverConfig.vm.provider "virtualbox" do |v|
+      	v.name = server['name']
+    		v.cpus = 1
+    		v.memory = 3072
+   		end
+  	end
+  end
+
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
+  end
+end
