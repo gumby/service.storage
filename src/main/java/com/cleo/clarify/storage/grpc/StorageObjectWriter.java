@@ -7,7 +7,7 @@ import com.cleo.clarify.storage.repository.StorageRepository;
 
 import io.grpc.stub.StreamObserver;
 
-public class ObjectWriter implements StreamObserver<ObjectData> {
+public class StorageObjectWriter implements StreamObserver<ObjectData> {
 
   private final StorageRepository storageRepo;
   private final String id;
@@ -15,7 +15,7 @@ public class ObjectWriter implements StreamObserver<ObjectData> {
   private int chunkCount = 0;
   private BigDecimal objectSize = new BigDecimal(0);
   
-  public ObjectWriter(StorageRepository storageRepo, StreamObserver<ObjectInfo> responseObserver) {
+  public StorageObjectWriter(StorageRepository storageRepo, StreamObserver<ObjectInfo> responseObserver) {
     this.id = UUID.randomUUID().toString();
     this.clientObserver = responseObserver;
     this.storageRepo = storageRepo;
@@ -30,7 +30,7 @@ public class ObjectWriter implements StreamObserver<ObjectData> {
 
   @Override
   public void onError(Throwable t) {
-    t.printStackTrace();
+    clientObserver.onError(t);
   }
 
   @Override

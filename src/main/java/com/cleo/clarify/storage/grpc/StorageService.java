@@ -47,7 +47,7 @@ public class StorageService extends StorageServiceImplBase {
 
   @Override
   public StreamObserver<ObjectData> store(StreamObserver<ObjectInfo> responseObserver) {
-    return new ObjectWriter(storageRepo, responseObserver);
+    return new StorageObjectWriter(storageRepo, responseObserver);
   }
 
 }
