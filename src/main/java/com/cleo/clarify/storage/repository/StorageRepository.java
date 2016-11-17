@@ -11,4 +11,8 @@ public interface StorageRepository {
 
   public Observable<ObjectMetadata> readMetadata(String objectId);
   
+  public void writeMetadata(String objectId, int chunkSize, long objectSize);
+
+  public void writeChunk(String id, int chunkIndex, byte[] data);
+  
 }

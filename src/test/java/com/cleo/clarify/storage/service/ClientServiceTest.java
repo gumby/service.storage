@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.cleo.clarify.storage.grpc.ObjectData;
 import com.cleo.clarify.storage.grpc.ObjectInfo;
@@ -28,9 +29,16 @@ public class ClientServiceTest {
     StreamObserver<ObjectData> data = StorageServiceGrpc.newStub(channel).store(new ObjectInfoResponseObserver(shutdown));
 
     IntStream chunkSizes = new Random().ints(numChunks, minBytes, maxBytes);
+    IntStream indexes = IntStream.range(0, numChunks);
+    
     Observable.from(chunkSizes::iterator)
+    .zipWith(Observable.from(indexes::iterator), (chunkSize, index) -> Pair.of(index, chunkSize))
     .forEach(
-        size -> data.onNext(ObjectData.newBuilder().setData(ByteString.copyFrom(randomBytes(size))).build()),
+        indexAndSize -> data.onNext(
+            ObjectData.newBuilder()
+              .setData(ByteString.copyFrom(randomBytes(indexAndSize.getRight())))
+              .setIndex(indexAndSize.getLeft())
+              .build()),
         error -> data.onError(error),
         () -> data.onCompleted());
 

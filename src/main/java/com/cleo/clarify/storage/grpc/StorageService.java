@@ -1,7 +1,7 @@
 package com.cleo.clarify.storage.grpc;
 
 import com.cleo.clarify.storage.grpc.StorageServiceGrpc.StorageServiceImplBase;
-import com.cleo.clarify.storage.writer.ObjectWriter;
+import com.cleo.clarify.storage.repository.StorageRepository;
 import com.google.inject.Inject;
 
 import io.grpc.ServerServiceDefinition;
@@ -12,11 +12,11 @@ import io.grpc.stub.StreamObserver;
 public class StorageService extends StorageServiceImplBase {
 
   private final HealthStatusManager healthManager;
-  private final ObjectWriter writer;
+  private final StorageRepository storageRepo;
   
   @Inject
-  public StorageService(ObjectWriter writer, HealthStatusManager healthManager) {
-    this.writer = writer;
+  public StorageService(StorageRepository storageRepo, HealthStatusManager healthManager) {
+    this.storageRepo = storageRepo;
     this.healthManager = healthManager;
   }
   
@@ -47,8 +47,7 @@ public class StorageService extends StorageServiceImplBase {
 
   @Override
   public StreamObserver<ObjectData> store(StreamObserver<ObjectInfo> responseObserver) {
-    System.out.println("Begin");
-    return new ObjectDataStreamObserver(writer, responseObserver);
+    return new ObjectWriter(storageRepo, responseObserver);
   }
 
 }

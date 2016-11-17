@@ -53,6 +53,12 @@ public class CassandraStorageRepository implements StorageRepository {
             .chunkCount(metadataRow.getInt("chunk_count"))
             .build());
   }
+  
+  @Override
+  public void writeMetadata(String objectId, int chunkSize, long objectSize) {
+    // TODO Auto-generated method stub
+    
+  }
 
   @Override
   public Observable<Chunk> readChunk(String objectId, int chunkIndex) {
@@ -60,6 +66,12 @@ public class CassandraStorageRepository implements StorageRepository {
         .map((rs) -> rs.one())
         .map((chunkRow) -> chunkRow.getBytes("data"))
         .map(data -> Chunk.builder().withIndex(chunkIndex).withData(data).build());
+  }
+  
+  @Override
+  public void writeChunk(String id, int chunkIndex, byte[] data) {
+    String rowKey = getRowKey(id, chunkIndex);
+    session.executeAsync(insertQuery.bind(rowKey, -1, data.length, -1, data));
   }
   
   private String getRowKey(String objectId, int chunkIndex) {
