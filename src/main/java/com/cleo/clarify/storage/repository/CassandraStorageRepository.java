@@ -71,7 +71,8 @@ public class CassandraStorageRepository implements StorageRepository {
   @Override
   public void writeChunk(String id, int chunkIndex, byte[] data) {
     String rowKey = getRowKey(id, chunkIndex);
-    session.executeAsync(insertQuery.bind(rowKey, -1, data.length, -1, data));
+//    session.executeAsync(insertQuery.bind(rowKey, -1, data.length, -1, data));
+    System.out.println("Wrote chunk: " + data.length);
   }
   
   private String getRowKey(String objectId, int chunkIndex) {
