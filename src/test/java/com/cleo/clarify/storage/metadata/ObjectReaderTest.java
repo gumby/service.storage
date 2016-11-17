@@ -36,7 +36,7 @@ public class ObjectReaderTest {
   }
   
   @Test
-  public void read_object_rx() {
+  public void read_object() {
     TestSubscriber<Chunk> testSub = TestSubscriber.create();
     new ObjectReader(
         new CassandraStorageRepository(cassandraRule.getSession()))

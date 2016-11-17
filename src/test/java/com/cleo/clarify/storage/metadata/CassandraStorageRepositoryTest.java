@@ -50,7 +50,7 @@ public class CassandraStorageRepositoryTest {
       .value("data", ByteBuffer.wrap(data));
   
   @Test
-  public void select_metdata_rx() throws InterruptedException {
+  public void select_metdata() throws InterruptedException {
     TestSubscriber<ObjectMetadata> testSubscriber = TestSubscriber.create();
     Observable<ObjectMetadata> observable = new CassandraStorageRepository(cassandraRule.getSession())
       .readMetadata(id);
@@ -65,7 +65,7 @@ public class CassandraStorageRepositoryTest {
   }
   
   @Test
-  public void select_chunk_rx() {
+  public void select_chunk() {
     TestSubscriber<Chunk> s = TestSubscriber.create();
     new CassandraStorageRepository(cassandraRule.getSession())
       .readChunk(id, 0)
