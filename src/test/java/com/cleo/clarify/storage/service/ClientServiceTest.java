@@ -1,11 +1,11 @@
 package com.cleo.clarify.storage.service;
 
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.cleo.clarify.storage.grpc.ObjectData;
 import com.cleo.clarify.storage.grpc.ObjectInfo;
@@ -19,30 +19,35 @@ import rx.Observable;
 
 public class ClientServiceTest {  
 
-  private static final int numChunks = 105_000;
+  
+  private static final int numChunks = 150_000;
   private static final int minBytes = 16_384;
   private static final int maxBytes = 65_572;
 
   public static void main(String[] args) throws InterruptedException {
     ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext(true).build();
-    AtomicBoolean shutdown = new AtomicBoolean();
-    StreamObserver<ObjectData> data = StorageServiceGrpc.newStub(channel).store(new ObjectInfoResponseObserver(shutdown));
+    CountDownLatch shutdownLatch = new CountDownLatch(1);
+    StreamObserver<ObjectData> data = StorageServiceGrpc.newStub(channel).store(new ObjectInfoObserver(shutdownLatch));
 
     IntStream chunkSizes = new Random().ints(numChunks, minBytes, maxBytes);
     IntStream indexes = IntStream.range(0, numChunks);
     
+    long start = System.nanoTime();
     Observable.from(chunkSizes::iterator)
-    .zipWith(Observable.from(indexes::iterator), (chunkSize, index) -> Pair.of(index, chunkSize))
-    .forEach(
-        indexAndSize -> data.onNext(
-            ObjectData.newBuilder()
-              .setData(ByteString.copyFrom(randomBytes(indexAndSize.getRight())))
-              .setIndex(indexAndSize.getLeft())
-              .build()),
-        error -> data.onError(error),
+    .zipWith(Observable.from(indexes::iterator), (chunkSize, index) -> IndexAndSize.from(index, chunkSize))
+    .subscribe(
+        indexAndSize -> 
+          data.onNext(ObjectData.newBuilder()
+            .setIndex(indexAndSize.index)
+            .setData(ByteString.copyFrom(randomBytes(indexAndSize.size)))
+            .build()), 
+        error -> error.printStackTrace(), 
         () -> data.onCompleted());
-
-    while (!shutdown.get());
+    
+    
+    shutdownLatch.await();
+    long end = System.nanoTime();
+    System.out.println("Total time (seconds): "+ TimeUnit.NANOSECONDS.toSeconds(end - start));
   }
 
   private static byte[] randomBytes(int size) {
@@ -52,23 +57,37 @@ public class ClientServiceTest {
     return bytes;
   }
 
-  private static final class ObjectInfoResponseObserver implements StreamObserver<ObjectInfo> {
-
-    private AtomicBoolean shutdown;
+  private static final class IndexAndSize {
+    public final int index;
+    public final int size;
     
-    public ObjectInfoResponseObserver(AtomicBoolean shutdown) {
-      this.shutdown = shutdown;
+    private IndexAndSize(int index, int size) {
+      this.index = index;
+      this.size = size;
+    }
+    
+    public static IndexAndSize from(int index, int size) {
+      return new IndexAndSize(index, size);
+    }
+  }
+  
+  private static final class ObjectInfoObserver implements StreamObserver<ObjectInfo> {
+
+    private CountDownLatch shutdownLatch;
+    
+    public ObjectInfoObserver(CountDownLatch shutdown) {
+      this.shutdownLatch = shutdown;
     }
 
     @Override
     public void onCompleted() {
-      System.out.println("Response completed.");
-      shutdown.set(true);
+      shutdownLatch.countDown();
     }
 
     @Override
     public void onError(Throwable t) {
       t.printStackTrace();
+      shutdownLatch.countDown();
     }
 
     @Override
